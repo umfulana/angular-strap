@@ -167,7 +167,7 @@ angular.module('mgcrea.ngStrap.helpers.dateParser', [])
         } else if (angular.isString(value) && 0 === value.length) { // Reset date
           date = key === 'minDate' ? -Infinity : +Infinity;
         } else {
-          date = new Date(value);
+          date = $dateParser.parse(value);
         }
 
         return date;

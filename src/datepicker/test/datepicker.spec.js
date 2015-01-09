@@ -102,8 +102,8 @@ describe('datepicker', function() {
       element: '<input type="text" ng-model="selectedDate" data-date-format="mediumDate" bs-datepicker>'
     },
     'options-minDate': {
-      scope: {selectedDate: new Date(1986, 1, 22), minDate: '02/20/86'},
-      element: '<input type="text" ng-model="selectedDate" data-min-date="{{minDate}}" bs-datepicker>'
+      scope: {selectedDate: new Date(1986, 1, 22), minDate: '02/20/1986'},
+      element: '<input type="text" ng-model="selectedDate" data-date-format="MM/dd/yyyy" data-min-date="{{minDate}}" bs-datepicker>'
     },
     'options-minDate-today': {
       scope: {selectedDate: new Date()},
@@ -118,8 +118,8 @@ describe('datepicker', function() {
       element: '<input type="text" ng-model="selectedDate" data-min-date="{{minDate}}" bs-datepicker>'
     },
     'options-maxDate': {
-      scope: {selectedDate: new Date(1986, 1, 22), maxDate: '02/24/86'},
-      element: '<input type="text" ng-model="selectedDate" data-max-date="{{maxDate}}" bs-datepicker>'
+      scope: {selectedDate: new Date(1986, 1, 22), maxDate: '02/24/1986'},
+      element: '<input type="text" ng-model="selectedDate" data-date-format="MM/dd/yyyy" data-max-date="{{maxDate}}" bs-datepicker>'
     },
     'options-maxDate-today': {
       scope: {selectedDate: new Date()},
@@ -869,7 +869,7 @@ describe('datepicker', function() {
         angular.element(elm[0]).triggerHandler('focus');
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(19)').is(':disabled')).toBeTruthy();
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(20)').is(':disabled')).toBeFalsy();
-        scope.minDate = '02/12/86';
+        scope.minDate = '02/12/1986';
         scope.$digest();
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(11)').is(':disabled')).toBeTruthy();
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(12)').is(':disabled')).toBeFalsy();
@@ -929,7 +929,7 @@ describe('datepicker', function() {
         angular.element(elm[0]).triggerHandler('focus');
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(24)').is(':disabled')).toBeFalsy();
         expect(sandboxEl.find('.dropdown-menu tbody button:contains(25)').is(':disabled')).toBeTruthy();
-        scope.maxDate = '02/12/86';
+        scope.maxDate = '02/12/1986';
         scope.$digest();
         // @TODO fixme
         // expect(sandboxEl.find('.dropdown-menu tbody button:contains(12)').is(':disabled')).toBeFalsy();
