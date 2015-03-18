@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.2.1 - 2015-03-10
+ * @version v2.2.1 - 2015-03-18
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes (olivier@mg-crea.com)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -174,7 +174,7 @@ angular.module('mgcrea.ngStrap.helpers.dateParser', [])
         } else if (angular.isString(value) && 0 === value.length) { // Reset date
           date = key === 'minDate' ? -Infinity : +Infinity;
         } else {
-          date = new Date(value);
+          date = $dateParser.parse(value);
         }
 
         return date;
