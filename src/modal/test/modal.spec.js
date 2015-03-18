@@ -35,6 +35,10 @@ describe('modal', function() {
       scope: {modal: {title: 'Title', content: 'Hello Modal!'}},
       element: '<a title="{{modal.title}}" data-content="{{modal.content}}" bs-modal>click me</a>'
     },
+    'default-with-id': {
+      scope: {modal: {title: 'Title', content: 'Hello Modal!'}},
+      element: '<a id="modal1" title="{{modal.title}}" data-content="{{modal.content}}" bs-modal>click me</a>'
+    },
     'markup-scope': {
       element: '<a bs-modal="modal">click me</a>'
     },
@@ -54,6 +58,10 @@ describe('modal', function() {
     'options-html': {
       scope: {modal: {title: 'Title', content: 'Hello Modal<br>This is a multiline message!'}},
       element: '<a title="{{modal.title}}" data-content="{{modal.content}}" data-html="1" bs-modal>click me</a>'
+    },
+    'options-backdrop': {
+      scope: { backdrop: false },
+      element: '<a data-placement="center" bs-modal="modal" data-backdrop="{{ backdrop }}">click me</a>'
     },
     'options-template': {
       scope: {modal: {title: 'Title', content: 'Hello Modal!', counter: 0}, items: ['foo', 'bar', 'baz']},
@@ -152,6 +160,16 @@ describe('modal', function() {
       expect(bodyEl.children('.modal').length).toBe(0);
       angular.element(elm[0]).triggerHandler('click');
       expect(bodyEl.children('.modal').length).toBe(1);
+    });
+
+    it('should store config id value in instance', function() {
+      var myModal = $modal({ title: 'Title', content: 'Hello Modal!', id: 'modal1' });
+      expect(myModal.$id).toBe('modal1');
+    });
+
+    it('should fallback to element id value when id is not provided in config', function() {
+      var myModal = $modal({ title: 'Title', content: 'Hello Modal!', element: sandboxEl });
+      expect(myModal.$id).toBe('sandbox');
     });
 
   });
@@ -281,6 +299,19 @@ describe('modal', function() {
       myModal.hide();
       $animate.triggerCallbacks();
     });
+
+    it('should call show.before event with modal element instance id', function() {
+      var elm = compileDirective('default-with-id');
+      var id = "";
+      scope.$on('modal.show.before', function(evt, modal) {
+        id = modal.$id;
+      });
+
+      angular.element(elm[0]).triggerHandler('click');
+      scope.$digest();
+      expect(id).toBe('modal1');
+    });
+
   });
 
   describe('options', function() {
@@ -362,6 +393,13 @@ describe('modal', function() {
         expect(sandboxEl.find('.modal-inner').text()).toBe('foo: ' + scope.modal.title);
       });
 
+      it('should support custom template loaded by ngInclude', function() {
+        $templateCache.put('custom', [200, '<div class="modal"><div class="modal-inner">foo: {{title}}</div></div>', {}, 'OK']);
+        var elm = compileDirective('options-template');
+        angular.element(elm[0]).triggerHandler('click');
+        expect(sandboxEl.find('.modal-inner').text()).toBe('foo: ' + scope.modal.title);
+      });
+
       it('should request custom template via $http', function() {
         $httpBackend.expectGET('custom').respond(200,  '<div class="modal"><div class="modal-inner">foo: {{title}}</div></div>');
         var elm = compileDirective('options-template');
@@ -413,6 +451,23 @@ describe('modal', function() {
         scope.$digest();
         expect(angular.element(testElm.children()[0]).hasClass('modal')).toBeTruthy();
       });
+    });
+
+    describe('backdrop', function() {
+      it('should show backdrop by default', function() {
+        var elm = compileDirective('default');
+        expect(bodyEl.find('.modal-backdrop').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('click');
+        expect(bodyEl.find('.modal-backdrop').length).toBe(1);
+      });
+
+      it('should not show backdrop if option value if falsy', function() {
+        var elm = compileDirective('options-backdrop');
+        expect(bodyEl.find('.modal-backdrop').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('click');
+        expect(bodyEl.find('.modal-backdrop').length).toBe(0);
+      });
+
     });
 
   });

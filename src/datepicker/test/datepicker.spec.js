@@ -35,6 +35,10 @@ describe('datepicker', function() {
       scope: {selectedDate: new Date()},
       element: '<input type="text" ng-model="selectedDate" bs-datepicker>'
     },
+    'default-with-id': {
+      scope: {selectedDate: new Date()},
+      element: '<input id="datepicker1" type="text" ng-model="selectedDate" bs-datepicker>'
+    },
     'value-past': {
       scope: {selectedDate: new Date(1986, 1, 22)},
       element: '<input type="text" ng-model="selectedDate" bs-datepicker>'
@@ -51,16 +55,16 @@ describe('datepicker', function() {
       element: '<input type="text" ng-model="selectedDate" ng-required="true" bs-datepicker>'
     },
     'options-animation': {
-      element: '<div class="btn" data-animation="am-flip-x" ng-model="datepickeredIcon" ng-options="icon.value as icon.label for icon in icons" bs-datepicker></div>'
+      element: '<div class="btn" data-animation="am-flip-x" ng-model="datepickeredIcon" bs-datepicker></div>'
     },
     'options-placement': {
-      element: '<div class="btn" data-placement="bottom" ng-model="datepickeredIcon" ng-options="icon.value as icon.label for icon in icons" bs-datepicker></div>'
+      element: '<div class="btn" data-placement="bottom" ng-model="datepickeredIcon" bs-datepicker></div>'
     },
     'options-placement-exotic': {
-      element: '<div class="btn" data-placement="bottom-right" ng-model="datepickeredIcon" ng-options="icon.value as icon.label for icon in icons" bs-datepicker></div>'
+      element: '<div class="btn" data-placement="bottom-right" ng-model="datepickeredIcon" bs-datepicker></div>'
     },
     'options-trigger': {
-      element: '<div class="btn" data-trigger="hover" ng-model="datepickeredIcon" ng-options="icon.value as icon.label for icon in icons" bs-datepicker></div>'
+      element: '<div class="btn" data-trigger="hover" ng-model="datepickeredIcon" bs-datepicker></div>'
     },
     'options-template': {
       element: '<input type="text" data-template="custom" ng-model="selectedDate" bs-datepicker>'
@@ -92,6 +96,9 @@ describe('datepicker', function() {
     'options-dateFormat-alt': {
       scope: {selectedDate: new Date(1986, 1, 22)},
       element: '<input type="text" ng-model="selectedDate" data-date-format="EEEE MMMM d, yyyy" bs-datepicker>'
+    },
+    'options-timezone-utc': {
+      element: '<input type="text" ng-model="selectedDate" data-date-format="yyyy-MM-dd" data-timezone="UTC" bs-datepicker>'
     },
     'options-strictFormat': {
       scope: {selectedDate: new Date(1986, 1, 4)},
@@ -668,6 +675,50 @@ describe('datepicker', function() {
 
   // });
 
+  describe('show / hide events', function() {
+
+    it('should dispatch show and show.before events', function() {
+      var myDatepicker = $datepicker(sandboxEl, null, { scope: scope, options: templates['default'].scope });
+      var emit = spyOn(myDatepicker.$scope, '$emit');
+      scope.$digest();
+      myDatepicker.show();
+
+      expect(emit).toHaveBeenCalledWith('tooltip.show.before', myDatepicker);
+      // show only fires AFTER the animation is complete
+      expect(emit).not.toHaveBeenCalledWith('tooltip.show', myDatepicker);
+      $animate.triggerCallbacks();
+      expect(emit).toHaveBeenCalledWith('tooltip.show', myDatepicker);
+    });
+
+    it('should dispatch hide and hide.before events', function() {
+      var myDatepicker = $datepicker(sandboxEl, null, { scope: scope, options: templates['default'].scope });
+      scope.$digest();
+      myDatepicker.show();
+
+      var emit = spyOn(myDatepicker.$scope, '$emit');
+      myDatepicker.hide();
+
+      expect(emit).toHaveBeenCalledWith('tooltip.hide.before', myDatepicker);
+      // hide only fires AFTER the animation is complete
+      expect(emit).not.toHaveBeenCalledWith('tooltip.hide', myDatepicker);
+      $animate.triggerCallbacks();
+      expect(emit).toHaveBeenCalledWith('tooltip.hide', myDatepicker);
+    });
+
+    it('should call show.before event with popover element instance id', function() {
+      var elm = compileDirective('default-with-id');
+      var id = "";
+      scope.$on('tooltip.show.before', function(evt, datepicker) {
+        id = datepicker.$id;
+      });
+
+      angular.element(elm[0]).triggerHandler('focus');
+      scope.$digest();
+      expect(id).toBe('datepicker1');
+    });
+
+  });
+
   describe('options', function() {
 
     describe('animation', function() {
@@ -846,6 +897,36 @@ describe('datepicker', function() {
         angular.element(sandboxEl.find('.dropdown-menu tbody .btn:contains(24)')).triggerHandler('click');
         expect(elm.val()).toBe('Feb 24, 1986');
       });
+
+    });
+
+    describe('timezone', function () {
+      var elm, i = 0;
+      var dates = [
+        new Date(2014, 0, 1),
+        new Date(2015, 0, 1),
+        new Date(2014, 11, 31),
+        new Date(2015, 11, 31),
+        new Date(2014, 7, 1),
+        new Date(2015, 7, 1),
+        new Date(1985, 0, 11)
+      ];
+
+      beforeEach(function() {
+        elm = compileDirective('options-timezone-utc', {selectedDate: dates[i]});
+      });
+
+      afterEach(function() { i++ });
+
+      for (var t = 0; t < dates.length; t++) {
+        it('should select date in utc timezone', function () {
+          expect(elm.val()).toBe(dateFilter(dates[i], 'yyyy-MM-dd', 'UTC'));
+          expect(scope.selectedDate.toDateString()).toBe(dates[i].toDateString());
+          angular.element(elm[0]).triggerHandler('focus');
+          angular.element(sandboxEl.find('.dropdown-menu tbody .btn:contains(15)')).triggerHandler('click');
+          expect(elm.val()).toBe(dateFilter(dates[i], 'yyyy-MM-\'15\'', 'UTC'));
+        });
+      }
 
     });
 

@@ -41,6 +41,12 @@
       <br />
       <small>(using data-template)</small>
     </button>
+
+    <!-- A popover can also be triggered programmatically using the $popover service -->
+    <button type="button" id="popover-as-service" class="btn btn-lg btn-primary" title="{{popover.title}}" ng-click="togglePopover()">Click to toggle popover
+      <br />
+      <small>(using $popover service)</small>
+    </button>
   </div>
 
   <h2 id="popovers-usage">Usage</h2>
@@ -51,7 +57,7 @@
     <div class="highlight">
       <pre>
         <code class="javascript" highlight-block>
-          var myPopover = $popover(element, {title: 'My Title', content: 'My Content'});
+          var myPopover = $popover(element, {title: 'My Title', content: 'My Content', trigger: 'manual'});
         </code>
       </pre>
     </div>
@@ -166,6 +172,24 @@
           <td>boolean</td>
           <td>false</td>
           <td>If provided, auto closes the tooltip when clicking outside of it.</td>
+        </tr>
+        <tr>
+          <td>id</td>
+          <td>string</td>
+          <td>''</td>
+          <td>
+            The popover instance id for usage in event handlers.
+          </td>
+        </tr>
+        <tr>
+          <td>viewport</td>
+          <td>string | object</td>
+          <td>{ selector: 'body', padding: 0 }</td> 	 	 	
+          <td>
+            <p>
+              Keeps the popover within the bounds of this element. Example: viewport: '#viewport' or { "selector": "#viewport", "padding": 0 }
+            </p>
+          </td>
         </tr>
       </tbody>
     </table>
