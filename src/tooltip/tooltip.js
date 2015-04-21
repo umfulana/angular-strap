@@ -2,7 +2,7 @@
 
 angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
 
-  .provider('$tooltip', function() {
+  .provider('$mgcreaTooltip', function() {
 
     var defaults = this.defaults = {
       animation: 'am-fade',
@@ -721,7 +721,7 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
 
   })
 
-  .directive('bsTooltip', function($window, $location, $sce, $tooltip, $$rAF) {
+  .directive('bsTooltip', function($window, $location, $sce, $mgcreaTooltip, $$rAF) {
 
     return {
       restrict: 'EAC',

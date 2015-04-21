@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 angular.module('mgcrea.ngStrap.timepicker', [
   'mgcrea.ngStrap.helpers.dateParser',
@@ -35,7 +35,7 @@ angular.module('mgcrea.ngStrap.timepicker', [
       arrowBehavior: 'pager'
     };
 
-    this.$get = function($window, $document, $rootScope, $sce, $dateFormatter, $tooltip, $timeout) {
+    this.$get = function($window, $document, $rootScope, $sce, $dateFormatter, $mgcreaTooltip, $timeout) {
 
       var bodyEl = angular.element($window.document.body);
       var isNative = /(ip(a|o)d|iphone|android)/ig.test($window.navigator.userAgent);
@@ -44,7 +44,7 @@ angular.module('mgcrea.ngStrap.timepicker', [
 
       function timepickerFactory(element, controller, config) {
 
-        var $timepicker = $tooltip(element, angular.extend({}, defaults, config));
+        var $timepicker = $mgcreaTooltip(element, angular.extend({}, defaults, config));
         var parentScope = config.scope;
         var options = $timepicker.$options;
         var scope = $timepicker.$scope;

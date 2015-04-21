@@ -17,7 +17,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
       delay: 0
     };
 
-    this.$get = function($window, $rootScope, $tooltip, $timeout) {
+    this.$get = function($window, $rootScope, $mgcreaTooltip, $timeout) {
 
       var bodyEl = angular.element($window.document.body);
       var matchesSelector = Element.prototype.matchesSelector || Element.prototype.webkitMatchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector;
@@ -30,7 +30,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
         var options = angular.extend({}, defaults, config);
         var scope = $dropdown.$scope = options.scope && options.scope.$new() || $rootScope.$new();
 
-        $dropdown = $tooltip(element, options);
+        $dropdown = $mgcreaTooltip(element, options);
         var parentEl = element.parent();
 
         // Protected methods

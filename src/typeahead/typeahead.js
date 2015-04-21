@@ -22,7 +22,7 @@ angular.module('mgcrea.ngStrap.typeahead', ['mgcrea.ngStrap.tooltip', 'mgcrea.ng
       comparator: ''
     };
 
-    this.$get = function($window, $rootScope, $tooltip, $timeout) {
+    this.$get = function($window, $rootScope, $mgcreaTooltip, $timeout) {
 
       var bodyEl = angular.element($window.document.body);
 
@@ -33,7 +33,7 @@ angular.module('mgcrea.ngStrap.typeahead', ['mgcrea.ngStrap.tooltip', 'mgcrea.ng
         // Common vars
         var options = angular.extend({}, defaults, config);
 
-        $typeahead = $tooltip(element, options);
+        $typeahead = $mgcreaTooltip(element, options);
         var parentScope = config.scope;
         var scope = $typeahead.$scope;
 
