@@ -10,17 +10,21 @@ describe('datepicker', function() {
   beforeEach(module('ngSanitize'));
   beforeEach(module('mgcrea.ngStrap.datepicker'));
 
-  beforeEach(inject(function (_$rootScope_, _$compile_, _$templateCache_, _$animate_, _dateFilter_, _$datepicker_, _$timeout_) {
+  beforeEach(inject(function ($injector, _$rootScope_, _$compile_, _$templateCache_, _$animate_, _dateFilter_, _$datepicker_, _$timeout_) {
     scope = _$rootScope_.$new();
     $compile = _$compile_;
     $templateCache = _$templateCache_;
-    $animate = _$animate_;
+    $animate = $injector.get('$animate');
+    $timeout = $injector.get('$timeout');
+    var flush = $animate.flush || $animate.triggerCallbacks;
+    $animate.flush = function() {
+      flush.call($animate); if(!$animate.triggerCallbacks) $timeout.flush();
+    };
     dateFilter = _dateFilter_;
     today = new Date();
     bodyEl.html('');
     sandboxEl = $('<div>').attr('id', 'sandbox').appendTo(bodyEl);
     $datepicker = _$datepicker_;
-    $timeout = _$timeout_;
   }));
 
   afterEach(function() {
@@ -34,6 +38,10 @@ describe('datepicker', function() {
     'default': {
       scope: {selectedDate: new Date()},
       element: '<input type="text" ng-model="selectedDate" bs-datepicker>'
+    },
+    'default-with-namespace': {
+      scope: {selectedDate: new Date()},
+      element: '<input type="text" ng-model="selectedDate" bs-datepicker data-prefix-event="modal">'
     },
     'default-with-id': {
       scope: {selectedDate: new Date()},
@@ -67,7 +75,7 @@ describe('datepicker', function() {
       element: '<div class="btn" data-trigger="hover" ng-model="datepickeredIcon" bs-datepicker></div>'
     },
     'options-template': {
-      element: '<input type="text" data-template="custom" ng-model="selectedDate" bs-datepicker>'
+      element: '<input type="text" data-template-url="custom" ng-model="selectedDate" bs-datepicker>'
     },
     'options-typeStringDateFormat': {
       scope: {selectedDate: '22/02/1986'},
@@ -153,7 +161,13 @@ describe('datepicker', function() {
       element: '<input type="text" ng-model="selectedDate" data-start-date="{{startDate}}" bs-datepicker>'
     },
     'options-autoclose': {
-      element: '<input type="text" ng-model="selectedDate" data-autoclose="1" bs-datepicker>'
+      element: '<input type="text" ng-model="selectedDate" data-autoclose="{{autoclose}}" bs-datepicker>'
+    },
+    'options-autoclose-hasToday': {
+      element: '<input type="text" ng-model="selectedDate" data-autoclose="{{autoclose}}" data-has-today="true" bs-datepicker>'
+    },
+    'options-autoclose-hasClear': {
+      element: '<input type="text" ng-model="selectedDate" data-autoclose="{{autoclose}}" data-has-clear="true" bs-datepicker>'
     },
     'options-useNative': {
       element: '<input type="text" ng-model="selectedDate" data-use-native="1" bs-datepicker>'
@@ -193,6 +207,22 @@ describe('datepicker', function() {
     'bsShow-binding': {
       scope: {isVisible: false, selectedDate: new Date()},
       element: '<input type="text" ng-model="selectedDate" bs-datepicker bs-show="isVisible">'
+    },
+    'options-container': {
+      scope: {selectedDate: new Date()},
+      element: '<input type="text" data-container="{{container}}" ng-model="selectedDate" bs-datepicker>'
+    },
+    'options-events': {
+      scope: {selectedDate: new Date()},
+      element: '<a bs-on-before-hide="onBeforeHide" bs-on-hide="onHide" bs-on-before-show="onBeforeShow" bs-on-show="onShow" ng-model="selectedDate" bs-datepicker>click me</a>'
+    },
+    'options-hasToday': {
+      scope: {selectedDate: new Date()},
+      element: '<input type="text" ng-model="selectedDate" data-has-today="true" data-min-date="{{minDate}}" data-date-format="yyyy-MM-dd" bs-datepicker>'
+    },
+    'options-hasClear': {
+      scope: {selectedDate: new Date()},
+      element: '<input type="text" ng-model="selectedDate" data-has-clear="true" data-min-date="{{minDate}}" data-date-format="yyyy-MM-dd" bs-datepicker>'
     }
   };
 
@@ -263,6 +293,19 @@ describe('datepicker', function() {
       angular.element(elm[0]).triggerHandler('focus');
       angular.element(sandboxEl.find('.dropdown-menu tbody .btn:contains(15)')[0]).triggerHandler('click');
       expect(elm.val()).toBe((today.getMonth() + 1) + '/15/' + (today.getFullYear() + '').substr(2));
+    });
+
+    it('should correctly select the first day of the month', function() {
+      var elm = compileDirective('default');
+      angular.element(elm[0]).triggerHandler('focus');
+
+      // change to next month
+      angular.element(sandboxEl.find('.dropdown-menu thead button:eq(2)')[0]).triggerHandler('click');
+
+      // select the first day of the month
+      angular.element(sandboxEl.find('.dropdown-menu tbody .btn:contains(01)')[0]).triggerHandler('click');
+      expect(sandboxEl.find('.dropdown-menu tbody td .btn-primary').text().trim() * 1).toBe(1);
+      expect(elm.val()).toBe((today.getMonth() + 1 + 1) + '/1/' + (today.getFullYear() + '').substr(2));
     });
 
     it('should correctly set the model with manually typed value', function() {
@@ -540,19 +583,19 @@ describe('datepicker', function() {
     it('should not create additional scopes after first show', function() {
       var elm = compileDirective('default');
       angular.element(elm[0]).triggerHandler('focus');
-      $animate.triggerCallbacks();
+      $animate.flush();
       expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(1);
       angular.element(elm[0]).triggerHandler('blur');
-      $animate.triggerCallbacks();
+      $animate.flush();
       expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
 
       var scopeCount = countScopes(scope, 0);
 
       for (var i = 0; i < 10; i++) {
         angular.element(elm[0]).triggerHandler('focus');
-        $animate.triggerCallbacks();
+        $animate.flush();
         angular.element(elm[0]).triggerHandler('blur');
-        $animate.triggerCallbacks();
+        $animate.flush();
       }
 
       expect(countScopes(scope, 0)).toBe(scopeCount);
@@ -561,7 +604,7 @@ describe('datepicker', function() {
     it('should not create additional scopes when changing months', function() {
       var elm = compileDirective('default');
       angular.element(elm[0]).triggerHandler('focus');
-      $animate.triggerCallbacks();
+      $animate.flush();
       expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(1);
 
       var scopeCount = countScopes(scope, 0);
@@ -582,9 +625,9 @@ describe('datepicker', function() {
 
       for (var i = 0; i < 10; i++) {
         angular.element(elm[0]).triggerHandler('focus');
-        $animate.triggerCallbacks();
+        $animate.flush();
         angular.element(elm[0]).triggerHandler('blur');
-        $animate.triggerCallbacks();
+        $animate.flush();
       }
 
       scope.$destroy();
@@ -686,7 +729,7 @@ describe('datepicker', function() {
       expect(emit).toHaveBeenCalledWith('tooltip.show.before', myDatepicker);
       // show only fires AFTER the animation is complete
       expect(emit).not.toHaveBeenCalledWith('tooltip.show', myDatepicker);
-      $animate.triggerCallbacks();
+      $animate.flush();
       expect(emit).toHaveBeenCalledWith('tooltip.show', myDatepicker);
     });
 
@@ -701,7 +744,7 @@ describe('datepicker', function() {
       expect(emit).toHaveBeenCalledWith('tooltip.hide.before', myDatepicker);
       // hide only fires AFTER the animation is complete
       expect(emit).not.toHaveBeenCalledWith('tooltip.hide', myDatepicker);
-      $animate.triggerCallbacks();
+      $animate.flush();
       expect(emit).toHaveBeenCalledWith('tooltip.hide', myDatepicker);
     });
 
@@ -739,13 +782,58 @@ describe('datepicker', function() {
 
     describe('autoclose', function() {
 
-      it('should close on select', function() {
-        var elm = compileDirective('options-autoclose');
+      it('should close on select if truthy', function() {
+        var elm = compileDirective('options-autoclose', {autoclose: "true"});
         expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
         angular.element(elm[0]).triggerHandler('focus');
         angular.element(sandboxEl.find('.dropdown-menu tbody .btn:first')).triggerHandler('click');
         $timeout.flush();
         expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+      });
+
+      it('should NOT close on select if falsy', function() {
+        var elm = compileDirective('options-autoclose', {autoclose: "false"});
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('focus');
+        angular.element(sandboxEl.find('.dropdown-menu tbody .btn:first')).triggerHandler('click');
+        $timeout.flush();
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).not.toBe(0);
+      });
+
+      it('should close on click today if truthy', function() {
+        var elm = compileDirective('options-autoclose-hasToday', {autoclose: "true"});
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('focus');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot .btn.today')).triggerHandler('click');
+        $timeout.flush();
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+      });
+
+      it('should NOT close on click today if falsy', function() {
+        var elm = compileDirective('options-autoclose-hasToday', {autoclose: "false"});
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('focus');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot .btn.today')).triggerHandler('click');
+        $timeout.flush();
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).not.toBe(0);
+      });
+
+      it('should close on click clear if truthy', function() {
+        var elm = compileDirective('options-autoclose-hasClear', {autoclose: "true"});
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('focus');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot .btn.clear')).triggerHandler('click');
+        $timeout.flush();
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+      });
+
+      it('should NOT close on click clear if falsy', function() {
+        var elm = compileDirective('options-autoclose-hasClear', {autoclose: "false"});
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).toBe(0);
+        angular.element(elm[0]).triggerHandler('focus');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot .btn.clear')).triggerHandler('click');
+        $timeout.flush();
+        expect(sandboxEl.children('.dropdown-menu.datepicker').length).not.toBe(0);
       });
 
     });
@@ -1108,6 +1196,80 @@ describe('datepicker', function() {
 
     });
 
+    describe('container', function() {
+
+      it('should append to container if defined', function() {
+        var testElm = $('<div id="testElm"></div>');
+        sandboxEl.append(testElm);
+        var elm = compileDirective('options-container', {container: '#testElm'});
+        angular.element(elm[0]).triggerHandler('focus');
+        expect(testElm.find('.datepicker').length).toBe(1);
+      })
+
+      it('should put datepicker in sandbox when container is falsy', function() {
+        var elm = compileDirective('options-container', {container: 'false'});
+        angular.element(elm[0]).triggerHandler('focus');
+        expect(sandboxEl.find('.datepicker').length).toBe(1);
+      })
+
+    })
+
+    describe('hasToday', function() {
+
+      it('should correctly support today feature inner content', function() {
+        var elm = compileDirective('options-hasToday', {selectedDate: new Date(2015, 3, 1)});
+        angular.element(elm[0]).triggerHandler('focus');
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr button.today').length).toBe(1);
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr>td').length).toBe(1);
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr>td').attr('colspan')).toBe('7');
+      });
+
+      it('should not be enable if today is out of valid period', function() {
+        var elm = compileDirective('options-hasToday', {selectedDate: new Date(2015, 3, 1)});
+        angular.element(elm[0]).triggerHandler('focus');
+
+        // Set min-date to tomorrow
+        scope.minDate = new Date(today.getTime() + 86400000);
+        scope.$digest();
+        expect(sandboxEl.find('.dropdown-menu tfoot button.today').is(':disabled')).toBeTruthy();
+
+        // Set min-date to yesterday
+        scope.minDate = new Date(today.getTime() - 86400000);
+        scope.$digest();
+        expect(sandboxEl.find('.dropdown-menu tfoot button.today').is(':disabled')).toBeFalsy();
+      });
+
+      it('should set correct value', function() {
+        var elm = compileDirective('options-hasToday', {selectedDate: new Date(2015, 3, 1)});
+        angular.element(elm[0]).triggerHandler('focus');
+
+        expect(elm.val()).toBe('2015-04-01');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot>tr button.today')).triggerHandler('click');
+        expect(elm.val()).toBe(dateFilter(today, 'yyyy-MM-dd'));
+      });
+
+    })
+
+    describe('hasClear', function() {
+
+      it('should correctly support clear feature inner content', function() {
+        var elm = compileDirective('options-hasClear', {selectedDate: new Date(2015, 3, 1)});
+        angular.element(elm[0]).triggerHandler('focus');
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr button.clear').length).toBe(1);
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr>td').length).toBe(1);
+        expect(sandboxEl.find('.dropdown-menu tfoot>tr>td').attr('colspan')).toBe('7');
+      });
+
+      it('should correctly cleared', function() {
+        var elm = compileDirective('options-hasClear', {selectedDate: new Date(2015, 3, 1)});
+        angular.element(elm[0]).triggerHandler('focus');
+        expect(elm.val()).toBe('2015-04-01');
+        angular.element(sandboxEl.find('.dropdown-menu tfoot>tr button.clear')).triggerHandler('click');
+        expect(elm.val()).toBe('');
+      });
+
+    })
+
   });
 
   describe('dateModelFormat', function() {
@@ -1387,5 +1549,123 @@ describe('datepicker', function() {
       datepickerViews.views[2].onKeyDown({ keyCode: 40 });
       expect(picker.select).not.toHaveBeenCalled();
     }));
+  });
+
+  describe('prefix', function () {
+    it('should call namespaced events from provider', function() {
+      var myDatepicker = $datepicker(sandboxEl, null, {prefixEvent: 'dp', scope : scope});
+      var emit = spyOn(myDatepicker.$scope, '$emit');
+      scope.$digest();
+      myDatepicker.show();
+      myDatepicker.hide();
+      $animate.flush();
+
+      expect(emit).toHaveBeenCalledWith('dp.show.before', myDatepicker);
+      expect(emit).toHaveBeenCalledWith('dp.show', myDatepicker);
+      expect(emit).toHaveBeenCalledWith('dp.hide.before', myDatepicker);
+      expect(emit).toHaveBeenCalledWith('dp.hide', myDatepicker);
+    });
+
+    it('should call namespaced events from directive', function() {
+      var elm = compileDirective('default-with-namespace');
+      var showBefore, show, hideBefore, hide;
+      scope.$on('modal.show.before', function() {
+        showBefore = true;
+      });
+      scope.$on('modal.show', function() {
+        show = true;
+      });
+      scope.$on('modal.hide.before', function() {
+        hideBefore = true;
+      });
+      scope.$on('modal.hide', function() {
+        hide = true;
+      });
+
+      angular.element(elm[0]).triggerHandler('focus');
+      $animate.flush();
+
+      expect(showBefore).toBe(true);
+      expect(show).toBe(true);
+
+      angular.element(elm[0]).triggerHandler('blur');
+      $animate.flush();
+
+      expect(hideBefore).toBe(true);
+      expect(hide).toBe(true);
+    });
+
+  });
+
+  describe('onBeforeShow', function() {
+
+    it('should invoke beforeShow event callback', function() {
+      var beforeShow = false;
+
+      function onBeforeShow(select) {
+        beforeShow = true;
+      }
+
+      var elm = compileDirective('options-events', {onBeforeShow: onBeforeShow});
+
+      angular.element(elm[0]).triggerHandler('focus');
+
+      expect(beforeShow).toBe(true);
+    });
+  });
+
+  describe('onShow', function() {
+
+    it('should invoke show event callback', function() {
+      var show = false;
+
+      function onShow(select) {
+        show = true;
+      }
+
+      var elm = compileDirective('options-events', {onShow: onShow});
+
+      angular.element(elm[0]).triggerHandler('focus');
+      $animate.flush();
+
+      expect(show).toBe(true);
+    });
+  });
+
+  describe('onBeforeHide', function() {
+
+    it('should invoke beforeHide event callback', function() {
+      var beforeHide = false;
+
+      function onBeforeHide(select) {
+        beforeHide = true;
+      }
+
+      var elm = compileDirective('options-events', {onBeforeHide: onBeforeHide});
+
+      angular.element(elm[0]).triggerHandler('focus');
+      angular.element(elm[0]).triggerHandler('blur');
+
+      expect(beforeHide).toBe(true);
+    });
+  });
+
+  describe('onHide', function() {
+
+    it('should invoke show event callback', function() {
+      var hide = false;
+
+      function onHide(select) {
+        hide = true;
+      }
+
+      var elm = compileDirective('options-events', {onHide: onHide});
+
+      angular.element(elm[0]).triggerHandler('focus');
+      angular.element(elm[0]).triggerHandler('blur');
+      $animate.flush();
+
+      expect(hide).toBe(true);
+    });
   });
 });
